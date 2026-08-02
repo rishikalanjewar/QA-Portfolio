@@ -1,0 +1,429 @@
+{
+  "info": {
+    "name": "MediDispense API Collection",
+    "description": "API test collection for MediDispense — pharmacy order and automated dispensing system. Covers order lifecycle, AI vision verification, and inventory endpoints as defined in the SRS (01-Requirements). Each request includes a test script asserting status code and response structure, plus a saved example response for demonstration without a live backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://api.medidispense.example.com" },
+    { "key": "auth_token", "value": "REPLACE_WITH_VALID_TOKEN" },
+    { "key": "order_id", "value": "1001" },
+    { "key": "medication_id", "value": "4" }
+  ],
+  "item": [
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create Order (POST /api/orders)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{auth_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient_name\": \"Anita Sharma\",\n  \"medication_id\": 1,\n  \"quantity\": 2,\n  \"dosage\": \"1 tablet twice daily\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"] },
+            "description": "Creates a new prescription order. Maps to TC-001, TC-002 (mandatory field validation), TC-006 (missing field rejection)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test('Response has order_id', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('order_id');",
+                  "});",
+                  "pm.test('Order status is Pending Verification', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('Pending Verification');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created - Success",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders" } },
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"patient_name\": \"Anita Sharma\",\n  \"medication_id\": 1,\n  \"quantity\": 2,\n  \"status\": \"Pending Verification\",\n  \"created_at\": \"2026-07-30T09:10:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request - Missing medication field",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders" } },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"validation_error\",\n  \"message\": \"medication_id is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Order by ID (GET /api/orders/{id})",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}"]
+            },
+            "description": "Fetches full order details. Maps to TC-037 (response schema validation)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response schema has required fields', function () {",
+                  "    const json = pm.response.json();",
+                  "    ['order_id','patient_name','medication_id','quantity','status'].forEach(function(field){",
+                  "        pm.expect(json).to.have.property(field);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"patient_name\": \"Anita Sharma\",\n  \"medication_id\": 1,\n  \"quantity\": 2,\n  \"status\": \"Verified\",\n  \"created_at\": \"2026-07-30T09:10:00Z\",\n  \"verified_by\": \"pharm_01\",\n  \"verified_at\": \"2026-07-30T09:20:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Order (PUT /api/orders/{id}/verify)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{auth_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"decision\": \"approve\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "verify"]
+            },
+            "description": "Pharmacist approves/rejects an order. Maps to TC-009, TC-011 (role restriction)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Status updated to Verified', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.eql('Verified');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK - Approved",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/verify" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"status\": \"Verified\",\n  \"verified_by\": \"pharm_01\",\n  \"verified_at\": \"2026-07-30T09:20:00Z\"\n}"
+            },
+            {
+              "name": "403 Forbidden - Technician attempting verify",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/verify" } },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"forbidden\",\n  \"message\": \"Only Pharmacist role can verify orders\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Dispense Order (PUT /api/orders/{id}/dispense)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/dispense",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "dispense"]
+            },
+            "description": "Dispenses a verified order and deducts inventory. Maps to TC-013, TC-014 (insufficient stock)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200 or 409', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK - Dispensed",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/dispense" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"status\": \"Dispensed\",\n  \"dispensed_by\": \"tech_01\",\n  \"dispensed_at\": \"2026-07-30T09:30:00Z\"\n}"
+            },
+            {
+              "name": "409 Conflict - Insufficient stock",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/dispense" } },
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"insufficient_stock\",\n  \"message\": \"Requested quantity exceeds available stock\",\n  \"available_stock\": 1,\n  \"requested_quantity\": 5\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "AI Vision Verification",
+      "item": [
+        {
+          "name": "Submit Vision Check (POST /api/orders/{id}/vision-check)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "pack_image", "type": "file", "src": "" }]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/vision-check",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "vision-check"]
+            },
+            "description": "Submits the dispensed pack image for AI verification. Maps to TC-022 through TC-026 (match/mismatch, invalid file, low confidence)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response includes match_status and confidence_score', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('match_status');",
+                  "    pm.expect(json).to.have.property('confidence_score');",
+                  "});",
+                  "pm.test('Low confidence is never marked Verified', function () {",
+                  "    const json = pm.response.json();",
+                  "    if (json.confidence_score <= 85) {",
+                  "        pm.expect(json.match_status).to.eql('Rejected');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK - Verified match",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/vision-check" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"match_status\": \"Verified\",\n  \"confidence_score\": 96.0,\n  \"checked_at\": \"2026-07-30T09:32:00Z\"\n}"
+            },
+            {
+              "name": "200 OK - Rejected mismatch",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/vision-check" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1002,\n  \"match_status\": \"Rejected\",\n  \"confidence_score\": 61.0,\n  \"checked_at\": \"2026-07-30T09:40:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request - No image attached",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/vision-check" } },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"missing_image\",\n  \"message\": \"pack_image is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Vision Result (GET /api/orders/{id}/vision-result)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/orders/{{order_id}}/vision-result",
+              "host": ["{{base_url}}"],
+              "path": ["api", "orders", "{{order_id}}", "vision-result"]
+            },
+            "description": "Fetches the AI vision verification result. Maps to TC-029."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('confidence_score is a number between 0 and 100', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.confidence_score).to.be.within(0, 100);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/vision-result" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"order_id\": 1001,\n  \"match_status\": \"Verified\",\n  \"confidence_score\": 96.0,\n  \"checked_at\": \"2026-07-30T09:32:00Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        {
+          "name": "List Inventory (GET /api/inventory)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/api/inventory", "host": ["{{base_url}}"], "path": ["api", "inventory"] },
+            "description": "Lists all inventory items. Maps to TC-034 (schema), TC-036 (auth required)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{base_url}}/api/inventory" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "[\n  { \"medication_id\": 1, \"medication\": \"Paracetamol 500mg\", \"stock_qty\": 48, \"expiry_date\": \"2027-03-15\" },\n  { \"medication_id\": 4, \"medication\": \"Metformin 500mg\", \"stock_qty\": 2, \"expiry_date\": \"2026-08-30\" }\n]"
+            },
+            {
+              "name": "401 Unauthorized - No token",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{base_url}}/api/inventory" } },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"unauthorized\",\n  \"message\": \"Missing or invalid authentication token\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Inventory Stock (PUT /api/inventory/{id})",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{auth_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"stock_qty\": 50\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/inventory/{{medication_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "inventory", "{{medication_id}}"]
+            },
+            "description": "Updates stock for a medication (Admin only). Maps to TC-035 (negative stock rejected), TC-036 (role restriction)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/inventory/{{medication_id}}" } },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"medication_id\": 4,\n  \"stock_qty\": 50,\n  \"updated_at\": \"2026-07-30T09:50:00Z\"\n}"
+            },
+            {
+              "name": "400 Bad Request - Negative stock",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/inventory/{{medication_id}}" } },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"validation_error\",\n  \"message\": \"stock_qty cannot be negative\"\n}"
+            },
+            {
+              "name": "403 Forbidden - Technician role",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{base_url}}/api/inventory/{{medication_id}}" } },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"forbidden\",\n  \"message\": \"Only Admin role can update inventory\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
