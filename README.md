@@ -11,7 +11,7 @@
 - 📋 **101 professional test cases** across 40 test scenarios, mapped to requirements and risk analysis
 - 🧪 A clickable **demo application** (`05-Demo-App`) built to execute real tests against — not just theoretical test cases
 - 🐞 **Real bug reports** written from actual defects found while testing the demo app
-- 🔌 **API test collection** (Postman) for 8 REST endpoints
+- 🔌 **Postman collection** — 8 REST endpoints, automated test scripts (`pm.test`), and saved success/failure example responses
 - 🗄️ **SQL validation against a real SQLite database** — executed queries surfaced 3 real defects (see below)
 - 📊 Test execution reports, bug metrics dashboard, and release checklist
 - 🤖 A test scope that includes an **AI vision verification feature** — testing an AI-driven pack-image match/reject flow, not just standard CRUD forms
