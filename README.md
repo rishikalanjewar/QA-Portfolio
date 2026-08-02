@@ -69,3 +69,5 @@ Manual/Functional Testing · Regression & Smoke Testing · API Testing (Postman)
 
 Built by **Rishika Lanjewar** — Product QA Engineer with experience in healthcare/pharmacy automation software.
 [LinkedIn](https://www.linkedin.com/in/rishika-lanjewar-931209192/)
+
+**Note:** I created this project to demonstrate my testing process using a fictional healthcare system inspired by the kinds of workflows I've worked with professionally. No confidential company information is included.
