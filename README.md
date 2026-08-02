@@ -12,7 +12,7 @@
 - 🧪 A clickable **demo application** (`05-Demo-App`) built to execute real tests against — not just theoretical test cases
 - 🐞 **Real bug reports** written from actual defects found while testing the demo app
 - 🔌 **API test collection** (Postman) for 8 REST endpoints
-- 🗄️ **SQL validation queries** for backend/database testing
+- 🗄️ **SQL validation against a real SQLite database** — executed queries surfaced 3 real defects (see below)
 - 📊 Test execution reports, bug metrics dashboard, and release checklist
 - 🤖 A test scope that includes an **AI vision verification feature** — testing an AI-driven pack-image match/reject flow, not just standard CRUD forms
 
@@ -26,6 +26,25 @@ This scenario is modeled on real pharmacy automation workflows, not a generic tu
 |---|---|
 | ![New order](assets/screenshots/new-order.png) | ![Verification queue](assets/screenshots/verification-queue.png) |
 | ![Vision verification](assets/screenshots/vision-verification.png) | |
+
+## Real defect caught by SQL validation
+
+Query executed against `07-Database-Testing/MediDispense.db`:
+
+```sql
+SELECT verification_id, order_id, confidence_score, match_status
+FROM vision_verification_log
+WHERE confidence_score <= 85
+  AND match_status = 'Verified';
+```
+
+**Result:**
+
+| verification_id | order_id | confidence_score | match_status |
+|---|---|---|---|
+| 6 | 10 | 70.0 | Verified |
+
+This order's AI vision check returned a 70% confidence score — below the documented 85% threshold — but was still marked "Verified" instead of "Rejected." Full execution log with 2 more defects: [`Validation-Execution-Log.md`](07-Database-Testing/Validation-Execution-Log.md)
 
 ## Repository structure
 
