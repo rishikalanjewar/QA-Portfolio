@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediDispense — Pharmacy Order & Dispensing System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FC;
+    --surface:#FFFFFF;
+    --surface-alt:#F0F1FA;
+    --sidebar-top:#161A3D;
+    --sidebar-bottom:#20265C;
+    --primary:#5B4FE9;
+    --primary-dark:#4738D6;
+    --accent:#5B4FE9;
+    --accent-light:#EEECFD;
+    --text:#12142B;
+    --text-secondary:#5D6178;
+    --text-muted:#9A9DB5;
+    --border:#E6E7F3;
+    --success:#12B76A;
+    --success-bg:#E7F9F1;
+    --warning:#F79009;
+    --warning-bg:#FEF3E2;
+    --danger:#F04438;
+    --danger-bg:#FDECEA;
+    --info:#2E90FA;
+    --info-bg:#EAF3FE;
+    --radius:8px;
+    --shadow-card:0 1px 2px rgba(18,20,43,0.04), 0 6px 20px rgba(18,20,43,0.06);
+    --font-sans:'Inter', -apple-system, sans-serif;
+    --font-display:'Sora', 'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:var(--font-sans);
+    background:var(--bg);
+    color:var(--text);
+    font-size:14px;
+    line-height:1.5;
+  }
+  svg.icon{width:17px;height:17px;flex-shrink:0;}
+  .app{display:flex;min-height:100vh;}
+  /* SIDEBAR */
+  .sidebar{
+    width:236px;
+    background:linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 100%);
+    color:#E4E5F5;
+    display:flex;
+    flex-direction:column;
+    flex-shrink:0;
+  }
+  .sidebar-brand{
+    padding:24px 22px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-brand .logo{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:18px;
+    letter-spacing:0.1px;
+  }
+  .sidebar-brand .logo span{color:#8B7FFF;}
+  .sidebar-brand .tag{
+    font-size:11px;
+    color:#8688B8;
+    margin-top:3px;
+    text-transform:uppercase;
+    letter-spacing:0.7px;
+  }
+  .nav{padding:16px 12px;flex:1;}
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:9px 12px;
+    border-radius:var(--radius);
+    color:#B4B6DA;
+    font-size:13.5px;
+    cursor:pointer;
+    margin-bottom:2px;
+    border:none;
+    background:none;
+    width:100%;
+    text-align:left;
+    font-family:var(--font-sans);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .nav-item svg{opacity:0.75;}
+  .nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(91,79,233,0.45);}
+  .nav-item.active svg{opacity:1;}
+  .nav-section-label{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    color:#63659A;
+    padding:16px 12px 6px;
+    font-weight:600;
+  }
+  .sidebar-foot{
+    padding:16px 22px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    font-size:12px;
+    color:#8688B8;
+  }
+  .sidebar-foot strong{color:#E4E5F5;}
+  .sidebar-foot button{
+    margin-top:9px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.16);
+    color:#E4E5F5;
+    padding:6px 11px;
+    border-radius:var(--radius);
+    font-size:12px;
+    cursor:pointer;
+    font-family:var(--font-sans);
+  }
+  .sidebar-foot button:hover{background:rgba(255,255,255,0.1);}
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:16px 30px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .topbar h1{font-family:var(--font-display);font-size:19px;font-weight:600;}
+  .topbar .role-pill{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    background:var(--accent-light);
+    color:var(--primary-dark);
+    padding:5px 12px;
+    border-radius:20px;
+    font-weight:500;
+    letter-spacing:0.3px;
+  }
+  .content{padding:28px 30px;flex:1;overflow-y:auto;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  h2.section-title{font-family:var(--font-display);font-size:15.5px;font-weight:600;margin-bottom:14px;color:var(--text);}
+  p.section-sub{color:var(--text-secondary);font-size:13px;margin-bottom:20px;margin-top:-10px;}
+
+  /* METRIC CARDS */
+  .metric-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;
+    margin-bottom:28px;
+  }
+  .metric-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    box-shadow:var(--shadow-card);
+    position:relative;
+    overflow:hidden;
+  }
+  .metric-card::before{
+    content:'';
+    position:absolute;
+    left:0;top:0;bottom:0;
+    width:3px;
+    background:var(--primary);
+  }
+  .metric-card .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+  .metric-card .value{font-family:var(--font-display);font-size:28px;font-weight:700;margin-top:8px;color:var(--text);}
+  .metric-card .sub{font-size:12px;color:var(--text-secondary);margin-top:4px;}
+
+  /* CARD / PANEL */
+  .panel{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:22px;
+    margin-bottom:22px;
+    box-shadow:var(--shadow-card);
+  }
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    color:var(--text-muted);
+    font-weight:600;
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+  }
+  td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--surface-alt);}
+  .mono{font-family:var(--font-mono);font-size:12.5px;}
+
+  /* STATUS PILLS */
+  .pill{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:20px;
+    font-family:var(--font-mono);
+    letter-spacing:0.2px;
+  }
+  .pill-pending{background:var(--info-bg);color:#175CB8;}
+  .pill-verified{background:var(--success-bg);color:#067A4A;}
+  .pill-rejected{background:var(--danger-bg);color:#B4261C;}
+  .pill-review{background:var(--warning-bg);color:#B4590A;}
+  .pill-complete{background:var(--accent-light);color:var(--primary-dark);}
+  .pill-dispensed{background:#EAF7FE;color:#0C6CA8;}
+
+  /* FORM */
+  label{display:block;font-size:12.5px;color:var(--text-secondary);margin-bottom:6px;font-weight:600;}
+  input,select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    font-size:13.5px;
+    font-family:var(--font-sans);
+    background:var(--surface);
+    color:var(--text);
+    margin-bottom:14px;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--accent-light);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  button.btn{
+    font-family:var(--font-sans);
+    font-size:13.5px;
+    font-weight:600;
+    padding:10px 18px;
+    border-radius:var(--radius);
+    border:none;
+    cursor:pointer;
+    transition:transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  button.btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(91,79,233,0.3);}
+  .btn-primary:hover{background:var(--primary-dark);}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-success:hover{background:#0E9C5A;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-danger:hover{background:#D63A2F;}
+  .btn-ghost{background:var(--surface-alt);color:var(--text);border:1px solid var(--border);}
+  .btn-sm{padding:6px 12px;font-size:12px;}
+  button:disabled{opacity:0.45;cursor:not-allowed;}
+
+  /* LOGIN */
+  .login-wrap{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(160deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 60%, #372E9E 100%);
+  }
+  .login-card{
+    background:var(--surface);
+    padding:38px 36px;
+    border-radius:16px;
+    width:380px;
+    box-shadow:0 20px 60px rgba(10,12,40,0.35);
+  }
+  .login-card .logo{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px;}
+  .login-card .logo span{color:var(--primary);}
+  .login-card .tag{font-size:12.5px;color:var(--text-muted);margin-bottom:28px;}
+  .role-btn{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    width:100%;
+    padding:13px 14px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--surface);
+    margin-bottom:10px;
+    cursor:pointer;
+    font-family:var(--font-sans);
+    text-align:left;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .role-btn:hover{border-color:var(--primary);background:var(--accent-light);}
+  .role-btn .ricon{
+    width:36px;height:36px;border-radius:9px;background:var(--accent-light);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--primary);
+  }
+  .role-btn .rname{font-weight:600;font-size:13.5px;}
+  .role-btn .rdesc{font-size:11.5px;color:var(--text-muted);margin-top:1px;}
+
+  /* VISION SCREEN */
+  .scan-frame{
+    width:220px;
+    height:220px;
+    border:2px dashed var(--border);
+    border-radius:14px;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--surface-alt);
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .scan-frame .pack-icon{opacity:0.3;color:var(--primary);}
+  .scan-line{
+    position:absolute;
+    left:0;right:0;top:0;
+    height:2px;
+    background:var(--primary);
+    box-shadow:0 0 10px 2px rgba(91,79,233,0.6);
+    display:none;
+  }
+  .scan-frame.scanning .scan-line{display:block;animation:sweep 1.1s linear infinite;}
+  @keyframes sweep{
+    0%{top:0;}
+    100%{top:100%;}
+  }
+  .confidence-display{
+    font-family:var(--font-display);
+    font-size:36px;
+    font-weight:700;
+  }
+  .empty-state{
+    text-align:center;
+    padding:40px 20px;
+    color:var(--text-muted);
+    font-size:13px;
+  }
+  .badge{
+    font-size:11px;
+    font-family:var(--font-mono);
+    background:var(--surface-alt);
+    padding:2px 8px;
+    border-radius:4px;
+    color:var(--text-secondary);
+  }
+  .toast{
+    position:fixed;
+    bottom:24px;
+    right:24px;
+    background:var(--sidebar-bottom);
+    color:#fff;
+    padding:13px 18px;
+    border-radius:10px;
+    font-size:13px;
+    display:none;
+    max-width:320px;
+    z-index:100;
+    box-shadow:0 10px 30px rgba(10,12,40,0.3);
+  }
+  .flex-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .text-muted{color:var(--text-muted);}
+  ::placeholder{color:var(--text-muted);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div class="logo">Medi<span>Dispense</span></div>
+    <div class="tag">Pharmacy order &amp; dispensing management</div>
+    <button class="role-btn" onclick="login('Pharmacist')">
+      <span class="ricon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></span>
+      <span>
+        <span class="rname">Continue as Pharmacist</span><br>
+        <span class="rdesc">Verify orders, review vision checks</span>
+      </span>
+    </button>
+    <button class="role-btn" onclick="login('Technician')">
+      <span class="ricon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></span>
+      <span>
+        <span class="rname">Continue as Technician</span><br>
+        <span class="rdesc">Create orders, manage dispensing</span>
+      </span>
+    </button>
+    <button class="role-btn" onclick="login('Admin')">
+      <span class="ricon"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></span>
+      <span>
+        <span class="rname">Continue as Admin</span><br>
+        <span class="rdesc">Manage inventory and users</span>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" class="app" style="display:none;">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">Medi<span>Dispense</span></div>
+      <div class="tag">Dispensing System</div>
+    </div>
+    <div class="nav">
+      <button class="nav-item active" onclick="showScreen('dashboard', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        Dashboard
+      </button>
+      <div class="nav-section-label">Orders</div>
+      <button class="nav-item" onclick="showScreen('newOrder', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        New order
+      </button>
+      <button class="nav-item" onclick="showScreen('verification', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        Verification queue
+      </button>
+      <button class="nav-item" onclick="showScreen('dispensing', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+        Dispensing
+      </button>
+      <button class="nav-item" onclick="showScreen('vision', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+        Vision verification
+      </button>
+      <div class="nav-section-label">Operations</div>
+      <button class="nav-item" onclick="showScreen('inventory', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        Inventory
+      </button>
+      <button class="nav-item" onclick="showScreen('reports', this)">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        Reports
+      </button>
+    </div>
+    <div class="sidebar-foot">
+      Signed in as<br><strong id="currentRoleLabel">—</strong>
+      <button onclick="logout()">Switch role</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1 id="screenTitle">Dashboard</h1>
+      <span class="role-pill" id="topbarRole">ROLE</span>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="screen active" id="screen-dashboard">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">Orders today</div>
+            <div class="value" id="m-orders-today">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Pending verification</div>
+            <div class="value" id="m-pending">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Low stock items</div>
+            <div class="value" id="m-lowstock">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Vision pass rate</div>
+            <div class="value" id="m-visionrate">—</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="section-title">Recent orders</h2>
+          <table>
+            <thead><tr><th>Order ID</th><th>Patient</th><th>Medication</th><th>Qty</th><th>Status</th></tr></thead>
+            <tbody id="recentOrdersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- NEW ORDER -->
+      <div class="screen" id="screen-newOrder">
+        <h2 class="section-title">Create new order</h2>
+        <p class="section-sub">Order intake for a new prescription.</p>
+        <div class="panel" style="max-width:520px;">
+          <label>Patient name</label>
+          <input type="text" id="in-patient" placeholder="e.g. Anita Sharma">
+          <div class="form-row">
+            <div>
+              <label>Medication</label>
+              <select id="in-medication">
+                <option value="Paracetamol 500mg">Paracetamol 500mg</option>
+                <option value="Amoxicillin 250mg">Amoxicillin 250mg</option>
+                <option value="Cetirizine 10mg">Cetirizine 10mg</option>
+                <option value="Metformin 500mg">Metformin 500mg</option>
+                <option value="Azithromycin 250mg">Azithromycin 250mg</option>
+              </select>
+            </div>
+            <div>
+              <label>Quantity</label>
+              <input type="number" id="in-qty" min="1" value="1">
+            </div>
+          </div>
+          <label>Dosage instructions</label>
+          <input type="text" id="in-dosage" placeholder="e.g. 1 tablet twice daily">
+          <button class="btn btn-primary" onclick="createOrder()">Create order</button>
+          <span id="orderFormMsg" style="margin-left:10px;font-size:12.5px;"></span>
+        </div>
+      </div>
+
+      <!-- VERIFICATION QUEUE -->
+      <div class="screen" id="screen-verification">
+        <h2 class="section-title">Verification queue</h2>
+        <p class="section-sub">Orders awaiting pharmacist review before dispensing.</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Order ID</th><th>Patient</th><th>Medication</th><th>Qty</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="verificationBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DISPENSING -->
+      <div class="screen" id="screen-dispensing">
+        <h2 class="section-title">Dispensing</h2>
+        <p class="section-sub">Verified orders ready to be dispensed. Stock is deducted on dispense.</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Order ID</th><th>Patient</th><th>Medication</th><th>Qty</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="dispensingBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VISION VERIFICATION -->
+      <div class="screen" id="screen-vision">
+        <h2 class="section-title">AI vision verification</h2>
+        <p class="section-sub">Capture and verify the dispensed pack image against the prescribed medication before an order can be marked complete.</p>
+        <div class="panel">
+          <div class="flex-between">
+            <label style="margin:0;">Select order</label>
+            <span></span>
+          </div>
+          <select id="visionOrderSelect" onchange="onVisionOrderChange()"></select>
+          <div id="visionWorkArea" style="display:none;margin-top:10px;">
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+              <div>
+                <div class="scan-frame" id="scanFrame">
+                  <div class="scan-line"></div>
+                  <svg class="pack-icon" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+                <button class="btn btn-primary btn-sm" id="runScanBtn" onclick="runVisionCheck()">Run vision check</button>
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <div class="text-muted" style="font-size:12px;margin-bottom:4px;">Result</div>
+                <div id="visionResultArea">
+                  <div class="empty-state" style="padding:10px 0;">No check run yet</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY -->
+      <div class="screen" id="screen-inventory">
+        <h2 class="section-title">Inventory</h2>
+        <p class="section-sub">Stock levels, batch numbers, and expiry dates.</p>
+        <div class="panel">
+          <table>
+            <thead><tr><th>Medication</th><th>Batch</th><th>Stock</th><th>Expiry</th><th>Status</th></tr></thead>
+            <tbody id="inventoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="screen" id="screen-reports">
+        <h2 class="section-title">Reports</h2>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="label">Total orders</div>
+            <div class="value" id="r-total">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Completed</div>
+            <div class="value" id="r-complete">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Under review</div>
+            <div class="value" id="r-review">0</div>
+          </div>
+          <div class="metric-card">
+            <div class="label">Vision checks run</div>
+            <div class="value" id="r-visionchecks">0</div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="section-title">Vision verification log</h2>
+          <table>
+            <thead><tr><th>Order ID</th><th>Result</th><th>Confidence</th><th>Checked at</th></tr></thead>
+            <tbody id="visionLogBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentRole = null;
+let orderSeq = 1;
+let orders = [];
+let visionLog = [];
+
+let inventory = [
+  {med:'Paracetamol 500mg', batch:'B-1042', stock:48, expiry:'2027-03-15', threshold:10},
+  {med:'Amoxicillin 250mg', batch:'B-2210', stock:6, expiry:'2026-11-02', threshold:10},
+  {med:'Cetirizine 10mg', batch:'B-3305', stock:10, expiry:'2027-06-20', threshold:10},
+  {med:'Metformin 500mg', batch:'B-4118', stock:2, expiry:'2026-08-30', threshold:10},
+  {med:'Azithromycin 250mg', batch:'B-5027', stock:0, expiry:'2025-12-01', threshold:10}
+];
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>{ t.style.display='none'; }, 2600);
+}
+
+function login(role){
+  currentRole = role;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('currentRoleLabel').textContent = role;
+  document.getElementById('topbarRole').textContent = role.toUpperCase();
+  renderAll();
+}
+
+function logout(){
+  currentRole = null;
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function showScreen(id, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const titles = {
+    dashboard:'Dashboard', newOrder:'New order', verification:'Verification queue',
+    dispensing:'Dispensing', vision:'AI vision verification', inventory:'Inventory', reports:'Reports'
+  };
+  document.getElementById('screenTitle').textContent = titles[id] || id;
+  renderAll();
+}
+
+function pillFor(status){
+  const map = {
+    'Pending Verification':'pill-pending',
+    'Verified':'pill-verified',
+    'Rejected':'pill-rejected',
+    'Dispensing Error — Under Review':'pill-review',
+    'Awaiting Verification':'pill-dispensed',
+    'Complete':'pill-complete'
+  };
+  return `<span class="pill ${map[status]||'pill-pending'}">${status}</span>`;
+}
+
+function createOrder(){
+  const patient = document.getElementById('in-patient').value.trim();
+  const med = document.getElementById('in-medication').value;
+  const qty = parseInt(document.getElementById('in-qty').value, 10);
+  const dosage = document.getElementById('in-dosage').value.trim();
+  const msgEl = document.getElementById('orderFormMsg');
+
+  if(!patient){ msgEl.style.color='var(--danger)'; msgEl.textContent='Patient name is required.'; return; }
+  if(!qty || qty < 1){ msgEl.style.color='var(--danger)'; msgEl.textContent='Enter a valid quantity.'; return; }
+
+  const order = {
+    id: 'ORD-' + String(orderSeq++).padStart(4,'0'),
+    patient, medication: med, qty, dosage,
+    status: 'Pending Verification',
+    createdAt: new Date().toLocaleString()
+  };
+  orders.push(order);
+  msgEl.style.color='var(--success)';
+  msgEl.textContent = `Order ${order.id} created.`;
+  document.getElementById('in-patient').value='';
+  document.getElementById('in-dosage').value='';
+  document.getElementById('in-qty').value=1;
+  renderAll();
+}
+
+function approveOrder(id){
+  const o = orders.find(x=>x.id===id);
+  if(o){ o.status='Verified'; toast(`${id} verified.`); renderAll(); }
+}
+function rejectOrder(id){
+  const o = orders.find(x=>x.id===id);
+  if(o){ o.status='Rejected'; toast(`${id} rejected.`); renderAll(); }
+}
+
+function dispenseOrder(id){
+  const o = orders.find(x=>x.id===id);
+  if(!o) return;
+  const inv = inventory.find(i=>i.med===o.medication);
+  if(!inv){ toast('No inventory record found.'); return; }
+  if(inv.stock < o.qty){
+    toast(`Insufficient stock for ${o.medication}.`);
+    return;
+  }
+  inv.stock -= o.qty;
+  o.status = 'Awaiting Verification';
+  o.dispensedAt = new Date().toLocaleString();
+  toast(`${id} dispensed. Proceed to vision verification.`);
+  renderAll();
+}
+
+function onVisionOrderChange(){
+  const sel = document.getElementById('visionOrderSelect');
+  const id = sel.value;
+  const workArea = document.getElementById('visionWorkArea');
+  const resultArea = document.getElementById('visionResultArea');
+  if(!id){ workArea.style.display='none'; return; }
+  workArea.style.display='block';
+  resultArea.innerHTML = '<div class="empty-state" style="padding:10px 0;">No check run yet</div>';
+}
+
+function runVisionCheck(){
+  const sel = document.getElementById('visionOrderSelect');
+  const id = sel.value;
+  const o = orders.find(x=>x.id===id);
+  if(!o) return;
+  const frame = document.getElementById('scanFrame');
+  const btn = document.getElementById('runScanBtn');
+  frame.classList.add('scanning');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+
+  setTimeout(()=>{
+    frame.classList.remove('scanning');
+    btn.disabled = false;
+    btn.textContent = 'Run vision check';
+
+    const confidence = Math.round(55 + Math.random()*45);
+    const threshold = 85;
+    const isMatch = confidence <= threshold ? false : true;
+
+    visionLog.push({
+      orderId:o.id, result: isMatch ? 'Verified':'Rejected',
+      confidence, checkedAt: new Date().toLocaleString()
+    });
+
+    if(isMatch){
+      o.status = 'Complete';
+    } else {
+      o.status = 'Dispensing Error — Under Review';
+    }
+
+    const resultArea = document.getElementById('visionResultArea');
+    const color = isMatch ? 'var(--success)' : 'var(--danger)';
+    resultArea.innerHTML = `
+      <div class="confidence-display" style="color:${color};">${confidence}%</div>
+      <div style="margin-top:6px;">${pillFor(o.status)}</div>
+      <div class="text-muted" style="font-size:11.5px;margin-top:8px;">Threshold: ${threshold}%</div>
+    `;
+    renderAll();
+  }, 1100);
+}
+
+function renderAll(){
+  if(!currentRole) return;
+
+  // Dashboard metrics
+  const today = new Date().toDateString();
+  const ordersToday = orders.filter(o=> new Date(o.createdAt).toDateString ? true : true).length;
+  document.getElementById('m-orders-today').textContent = orders.length;
+  document.getElementById('m-pending').textContent = orders.filter(o=>o.status==='Pending Verification').length;
+  const lowStockCount = inventory.filter(i=> i.stock < i.threshold).length;
+  document.getElementById('m-lowstock').textContent = lowStockCount;
+  const passCount = visionLog.filter(v=>v.result==='Verified').length;
+  document.getElementById('m-visionrate').textContent = visionLog.length ? Math.round(passCount/visionLog.length*100)+'%' : '—';
+
+  const recentBody = document.getElementById('recentOrdersBody');
+  recentBody.innerHTML = orders.slice().reverse().slice(0,6).map(o=>`
+    <tr><td class="mono">${o.id}</td><td>${o.patient}</td><td>${o.medication}</td><td>${o.qty}</td><td>${pillFor(o.status)}</td></tr>
+  `).join('') || '<tr><td colspan="5" class="empty-state">No orders yet. Create one from "New order".</td></tr>';
+
+  // Verification queue
+  const verBody = document.getElementById('verificationBody');
+  const pendingOrders = orders.filter(o=>o.status==='Pending Verification');
+  verBody.innerHTML = pendingOrders.map(o=>`
+    <tr>
+      <td class="mono">${o.id}</td><td>${o.patient}</td><td>${o.medication}</td><td>${o.qty}</td><td>${pillFor(o.status)}</td>
+      <td>
+        <button class="btn btn-success btn-sm" onclick="approveOrder('${o.id}')">Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectOrder('${o.id}')">Reject</button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="empty-state">No orders pending verification.</td></tr>';
+
+  // Dispensing
+  const dispBody = document.getElementById('dispensingBody');
+  const verifiedOrders = orders.filter(o=>o.status==='Verified');
+  dispBody.innerHTML = verifiedOrders.map(o=>{
+    const inv = inventory.find(i=>i.med===o.medication);
+    const stock = inv ? inv.stock : '—';
+    return `
+    <tr>
+      <td class="mono">${o.id}</td><td>${o.patient}</td><td>${o.medication}</td><td>${o.qty}</td>
+      <td class="mono">${stock}</td><td>${pillFor(o.status)}</td>
+      <td><button class="btn btn-primary btn-sm" onclick="dispenseOrder('${o.id}')">Dispense</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty-state">No verified orders ready to dispense.</td></tr>';
+
+  // Vision select
+  const visionSelect = document.getElementById('visionOrderSelect');
+  const awaiting = orders.filter(o=>o.status==='Awaiting Verification');
+  const prevVal = visionSelect.value;
+  visionSelect.innerHTML = '<option value="">Select an order awaiting vision verification</option>' +
+    awaiting.map(o=>`<option value="${o.id}">${o.id} — ${o.patient} (${o.medication})</option>`).join('');
+  if(awaiting.find(o=>o.id===prevVal)) visionSelect.value = prevVal;
+
+  // Inventory
+  const invBody = document.getElementById('inventoryBody');
+  invBody.innerHTML = inventory.map(i=>{
+    const low = i.stock < i.threshold;
+    const out = i.stock === 0;
+    const statusPill = out ? '<span class="pill pill-rejected">Out of stock</span>'
+      : low ? '<span class="pill pill-review">Low stock</span>'
+      : '<span class="pill pill-verified">In stock</span>';
+    return `<tr><td>${i.med}</td><td class="mono">${i.batch}</td><td class="mono">${i.stock}</td><td class="mono">${i.expiry}</td><td>${statusPill}</td></tr>`;
+  }).join('');
+
+  // Reports
+  document.getElementById('r-total').textContent = orders.length;
+  document.getElementById('r-complete').textContent = orders.filter(o=>o.status==='Complete').length;
+  document.getElementById('r-review').textContent = orders.filter(o=>o.status==='Dispensing Error — Under Review').length;
+  document.getElementById('r-visionchecks').textContent = visionLog.length;
+
+  const visionLogBody = document.getElementById('visionLogBody');
+  visionLogBody.innerHTML = visionLog.slice().reverse().map(v=>`
+    <tr>
+      <td class="mono">${v.orderId}</td>
+      <td>${pillFor(v.result)}</td>
+      <td class="mono">${v.confidence}%</td>
+      <td class="mono">${v.checkedAt}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" class="empty-state">No vision checks run yet.</td></tr>';
+}
+</script>
+</body>
+</html>
