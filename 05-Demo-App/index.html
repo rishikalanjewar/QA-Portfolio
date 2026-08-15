@@ -401,33 +401,33 @@
       <div class="tag">Dispensing System</div>
     </div>
     <div class="nav">
-      <button class="nav-item active" onclick="showScreen('dashboard', this)">
+      <button class="nav-item active" id="navDashboard" data-roles="Pharmacist,Technician,Admin" onclick="showScreen('dashboard', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
         Dashboard
       </button>
-      <div class="nav-section-label">Orders</div>
-      <button class="nav-item" onclick="showScreen('newOrder', this)">
+      <div class="nav-section-label" data-roles="Technician,Pharmacist">Orders</div>
+      <button class="nav-item" data-roles="Technician" onclick="showScreen('newOrder', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
         New order
       </button>
-      <button class="nav-item" onclick="showScreen('verification', this)">
+      <button class="nav-item" data-roles="Pharmacist" onclick="showScreen('verification', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         Verification queue
       </button>
-      <button class="nav-item" onclick="showScreen('dispensing', this)">
+      <button class="nav-item" data-roles="Technician" onclick="showScreen('dispensing', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
         Dispensing
       </button>
-      <button class="nav-item" onclick="showScreen('vision', this)">
+      <button class="nav-item" data-roles="Pharmacist" onclick="showScreen('vision', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
         Vision verification
       </button>
-      <div class="nav-section-label">Operations</div>
-      <button class="nav-item" onclick="showScreen('inventory', this)">
+      <div class="nav-section-label" data-roles="Technician,Admin">Operations</div>
+      <button class="nav-item" data-roles="Technician,Admin" onclick="showScreen('inventory', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
         Inventory
       </button>
-      <button class="nav-item" onclick="showScreen('reports', this)">
+      <button class="nav-item" data-roles="Admin" onclick="showScreen('reports', this)">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
         Reports
       </button>
@@ -634,7 +634,16 @@ function login(role){
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('currentRoleLabel').textContent = role;
   document.getElementById('topbarRole').textContent = role.toUpperCase();
+  applyRoleRestrictions(role);
+  showScreen('dashboard', document.getElementById('navDashboard'));
   renderAll();
+}
+
+function applyRoleRestrictions(role){
+  document.querySelectorAll('[data-roles]').forEach(el=>{
+    const allowed = el.getAttribute('data-roles').split(',');
+    el.style.display = allowed.includes(role) ? '' : 'none';
+  });
 }
 
 function logout(){
@@ -669,6 +678,7 @@ function pillFor(status){
 }
 
 function createOrder(){
+  if(currentRole !== 'Technician'){ toast('Not authorized: only Technicians can create orders.'); return; }
   const patient = document.getElementById('in-patient').value.trim();
   const med = document.getElementById('in-medication').value;
   const qty = parseInt(document.getElementById('in-qty').value, 10);
@@ -694,15 +704,18 @@ function createOrder(){
 }
 
 function approveOrder(id){
+  if(currentRole !== 'Pharmacist'){ toast('Not authorized: only Pharmacists can approve orders.'); return; }
   const o = orders.find(x=>x.id===id);
   if(o){ o.status='Verified'; toast(`${id} verified.`); renderAll(); }
 }
 function rejectOrder(id){
+  if(currentRole !== 'Pharmacist'){ toast('Not authorized: only Pharmacists can reject orders.'); return; }
   const o = orders.find(x=>x.id===id);
   if(o){ o.status='Rejected'; toast(`${id} rejected.`); renderAll(); }
 }
 
 function dispenseOrder(id){
+  if(currentRole !== 'Technician'){ toast('Not authorized: only Technicians can dispense orders.'); return; }
   const o = orders.find(x=>x.id===id);
   if(!o) return;
   const inv = inventory.find(i=>i.med===o.medication);
@@ -729,6 +742,7 @@ function onVisionOrderChange(){
 }
 
 function runVisionCheck(){
+  if(currentRole !== 'Pharmacist'){ toast('Not authorized: only Pharmacists can run vision verification.'); return; }
   const sel = document.getElementById('visionOrderSelect');
   const id = sel.value;
   const o = orders.find(x=>x.id===id);
