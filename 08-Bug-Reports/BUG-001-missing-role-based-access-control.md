@@ -37,4 +37,9 @@ All three roles (Pharmacist, Technician, Admin) have identical access to every s
 (Add screenshots: sidebar/navigation looks identical when logged in as each of the 3 roles)
 
 ## Status
-New
+   Closed
+
+   ## Retest
+   **Retested by:** Rishika Lanjewar
+   **Retest date:** 2026-08-15
+   **Result:** Pass — each role now sees only its permitted navigation items and restricted actions are blocked at the function level, not just hidden in the UI. Verified by logging in as Pharmacist, Technician, and Admin and confirming distinct access for each.
